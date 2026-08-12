@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Carbon — Pastebin</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg:#0f1115;
+    --panel:#171a21;
+    --panel2:#1c2029;
+    --border:#2a2f3a;
+    --text:#e8eaef;
+    --muted:#8b919e;
+    --amber:#e8a33d;
+    --teal:#3fa796;
+    --red:#e0605a;
+    --paper:#f3efe4;
+    --paper-ink:#1e1e1a;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh}
+  h1,h2,.brand,.btn,label,.nav a,.meta{font-family:'Space Grotesk',sans-serif}
+
+  header{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:14px 20px;border-bottom:1px solid var(--border);
+    position:sticky;top:0;background:rgba(15,17,21,.92);backdrop-filter:blur(8px);z-index:20;
+  }
+  .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px;cursor:pointer;color:var(--text);text-decoration:none}
+  .brand .dot{width:20px;height:20px;border-radius:5px;background:linear-gradient(135deg,var(--amber),var(--teal))}
+  .nav{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+  .nav a,.nav button{
+    background:transparent;border:1px solid var(--border);color:var(--muted);
+    padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none;
+  }
+  .nav a.on,.nav button.on{background:var(--amber);color:#17181c;border-color:var(--amber)}
+
+  main{max-width:900px;margin:0 auto;padding:28px 18px 70px}
+
+  .hero{margin-bottom:20px}
+  .hero .tag{color:var(--teal);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+  .hero h1{font-size:clamp(26px,4.5vw,36px);margin-top:6px;line-height:1.15}
+  .hero p{color:var(--muted);margin-top:8px;font-size:13.5px;max-width:52ch;line-height:1.5}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+
+  input[type=text],select,textarea{
+    width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);padding:10px 12px;outline:none;font-family:inherit;font-size:13px;
+  }
+  input[type=text]:focus,select:focus,textarea:focus{border-color:#3d4658}
+  textarea{min-height:280px;resize:vertical;line-height:1.55;background:var(--paper);color:var(--paper-ink);border-color:#d8d0bc}
+  label.field{display:block;font-size:11px;color:var(--muted);margin:0 0 6px;font-weight:600;letter-spacing:.04em}
+
+  .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:12px}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
+
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .spacer{flex:1}
+  .hint{color:var(--muted);font-size:12px}
+
+  .btn{
+    border:0;cursor:pointer;padding:10px 16px;border-radius:8px;font-weight:700;font-size:13px;
+    color:#17181c;background:var(--amber);
+  }
+  .btn.alt{background:transparent;color:var(--text);border:1px solid var(--border)}
+  .btn.teal{background:var(--teal);color:#0b1715}
+  .btn.red{background:var(--red);color:#2a0e0c}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn:active{transform:translateY(1px)}
+
+  .linkbox{
+    display:flex;gap:8px;align-items:center;margin-top:8px;
+    background:#0c0e12;border:1px solid var(--border);border-radius:8px;padding:6px 6px 6px 12px;
+  }
+  .linkbox .tag{color:var(--muted);font-size:11px;white-space:nowrap}
+  .linkbox input{flex:1;min-width:0;background:transparent;border:0;color:var(--teal);font-size:12.5px;outline:none;padding:6px 0}
+
+  .paste-head{display:flex;gap:12px;flex-wrap:wrap;align-items:baseline;margin-bottom:12px}
+  .paste-head h2{font-size:20px;flex:1;min-width:0;overflow-wrap:anywhere}
+  .meta{color:var(--muted);font-size:12px}
+
+  .codebox{
+    display:flex;background:var(--paper);border:1px solid #d8d0bc;border-radius:8px;
+    overflow:auto;max-height:65vh;
+  }
+  .ln{
+    padding:14px 10px;color:#9a917c;font-size:12px;line-height:1.6;text-align:right;
+    white-space:pre;user-select:none;border-right:1px solid #d8d0bc;background:#ece6d4;
+  }
+  .codebox pre{padding:14px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:var(--paper-ink);flex:1;margin:0}
+
+  .raw-wrap{background:var(--paper);color:var(--paper-ink);border:1px solid #d8d0bc;border-radius:8px;overflow:hidden}
+  .raw-bar{display:flex;gap:8px;padding:10px;background:#ece6d4;border-bottom:1px solid #d8d0bc}
+  .raw-bar button{
+    border:1px solid #d0c8b0;background:#f3efe4;color:#1e1e1a;border-radius:8px;
+    padding:7px 12px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;cursor:pointer;
+  }
+  .raw-wrap pre{padding:16px;font:12.5px/1.6 'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word;max-height:70vh;overflow:auto;margin:0}
+
+  .list{display:flex;flex-direction:column;gap:8px}
+  .item{
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px 14px;
+  }
+  .item .title{font-weight:700;font-family:'Space Grotesk',sans-serif;font-size:14px;cursor:pointer;color:var(--text)}
+  .item .title:hover{color:var(--amber)}
+  .item .sub{color:var(--muted);font-size:11.5px}
+  .badge{
+    font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;
+    background:#252a35;color:var(--muted);border:1px solid var(--border);
+  }
+
+  .empty{color:var(--muted);text-align:center;padding:40px 10px;font-size:13px}
+  .err{color:var(--red)}
+
+  #toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(12px);
+    background:var(--teal);color:#0b1715;padding:10px 18px;border-radius:8px;
+    font-weight:700;font-size:13px;font-family:'Space Grotesk',sans-serif;
+    opacity:0;pointer-events:none;transition:.22s;z-index:100;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.bad{background:var(--red);color:#2a0e0c}
+
+  .view{display:none}
+  .view.on{display:block}
+  ::selection{background:var(--amber);color:#17181c}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="#/" onclick="go('home');return false"><span class="dot"></span>Carbon</a>
+  <div class="nav">
+    <a href="#/" id="navHome" class="on" onclick="go('home');return false">New paste</a>
+    <a href="#/recent" id="navRecent" onclick="go('recent');return false">Recent</a>
+  </div>
+</header>
+
+<main>
+  <!-- HOME -->
+  <div id="view-home" class="view on">
+    <div class="hero">
+      <div class="tag">Pastebin-style · local</div>
+      <h1>Paste text. Get a link.</h1>
+      <p>No account. Pastes are stored in this browser. Share the hash link with anyone on the same device, or host this page with shared storage later.</p>
+    </div>
+
+    <div class="card">
+      <div class="grid2" style="margin-bottom:12px">
+        <div>
+          <label class="field">TITLE</label>
+          <input type="text" id="pTitle" placeholder="Untitled paste"/>
+        </div>
+        <div>
+          <label class="field">LANGUAGE / TAG</label>
+          <select id="pLang">
+            <option value="text">Plain text</option>
+            <option value="lua">Lua</option>
+            <option value="js">JavaScript</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="py">Python</option>
+            <option value="json">JSON</option>
+            <option value="bash">Bash</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <label class="field">CONTENT</label>
+      <textarea id="pBody" placeholder="Paste your code or text here..." spellcheck="false"></textarea>
+      <div class="row">
+        <span class="hint" id="charCount">0 characters</span>
+        <div class="spacer"></div>
+        <button class="btn alt" id="clearBtn">Clear</button>
+        <button class="btn" id="createBtn">Create paste →</button>
+      </div>
+      <div id="result"></div>
+    </div>
+  </div>
+
+  <!-- RECENT -->
+  <div id="view-recent" class="view">
+    <div class="hero">
+      <div class="tag">This browser</div>
+      <h1>Recent pastes</h1>
+      <p>Pastes saved on this device. Oldest can be cleared anytime.</p>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <div class="spacer"></div>
+      <button class="btn red" id="clearAllBtn">Delete all pastes</button>
+    </div>
+    <div class="list" id="recentList"></div>
+  </div>
+
+  <!-- PASTE VIEW -->
+  <div id="view-paste" class="view"></div>
+
+  <!-- RAW VIEW -->
+  <div id="view-raw" class="view"></div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  var ALPHABET = '23456789abcdefghijkmnpqrstuvwxyzACDEFGHJKLMNPQRSTUVWXYZ';
+  var INDEX_KEY = 'carbon:index';
+
+  function newId(n) {
+    var s = '';
+    for (var i = 0; i < n; i++) s += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+    return s;
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function toast(msg, bad) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.toggle('bad', !!bad);
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.classList.remove('show'); }, 1600);
+  }
+
+  function copyText(t) {
+    if (!t) { toast('Nothing to copy', true); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(function () { toast('Copied'); })
+        .catch(function () { fallbackCopy(t); });
+    } else fallbackCopy(t);
+  }
+
+  function fallbackCopy(t) {
+    var a = document.createElement('textarea');
+    a.value = t;
+    a.style.cssText = 'position:fixed;left:-9999px';
+    document.body.appendChild(a);
+    a.select();
+    try { document.execCommand('copy'); toast('Copied'); }
+    catch (e) { toast('Copy failed', true); }
+    document.body.removeChild(a);
+  }
+
+  /* storage */
+  function getRaw(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function setRaw(key, val) {
+    try { localStorage.setItem(key, val); return true; } catch (e) { return false; }
+  }
+  function delRaw(key) {
+    try { localStorage.removeItem(key); } catch (e) {}
+  }
+
+  function getIndex() {
+    try { return JSON.parse(getRaw(INDEX_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function setIndex(arr) {
+    setRaw(INDEX_KEY, JSON.stringify(arr.slice(0, 80)));
+  }
+
+  function savePaste(id, obj) {
+    if (!setRaw('paste:' + id, JSON.stringify(obj))) return false;
+    var idx = getIndex().filter(function (x) { return x.id !== id; });
+    idx.unshift({ id: id, t: obj.t, lang: obj.lang || 'text', d: obj.d, n: (obj.c || '').length });
+    setIndex(idx);
+    return true;
+  }
+
+  function loadPaste(id) {
+    var raw = getRaw('paste:' + id);
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (e) { return { t: 'Untitled', c: raw, lang: 'text', d: null }; }
+  }
+
+  function pasteLink(id) {
+    return location.origin + location.pathname + '#/' + id;
+  }
+  function rawLink(id) {
+    return location.origin + location.pathname + '#/' + id + '/raw';
+  }
+
+  /* views */
+  function show(name) {
+    ['home', 'recent', 'paste', 'raw'].forEach(function (v) {
+      var el = document.getElementById('view-' + v);
+      if (el) el.classList.toggle('on', v === name);
+    });
+    document.getElementById('navHome').classList.toggle('on', name === 'home');
+    document.getElementById('navRecent').classList.toggle('on', name === 'recent');
+  }
+
+  function go(name) {
+    if (name === 'home') location.hash = '#/';
+    else if (name === 'recent') location.hash = '#/recent';
+  }
+
+  /* home */
+  document.getElementById('pBody').addEventListener('input', function () {
+    document.getElementById('charCount').textContent = this.value.length + ' characters';
+  });
+
+  document.getElementById('clearBtn').onclick = function () {
+    document.getElementById('pTitle').value = '';
+    document.getElementById('pBody').value = '';
+    document.getElementById('pLang').value = 'text';
+    document.getElementById('charCount').textContent = '0 characters';
+    document.getElementById('result').innerHTML = '';
+  };
+
+  document.getElementById('createBtn').onclick = function () {
+    var title = document.getElementById('pTitle').value.trim() || 'Untitled paste';
+    var body = document.getElementById('pBody').value;
+    var lang = document.getElementById('pLang').value || 'text';
+    if (!body.trim()) { toast('Write something first', true); return; }
+
+    var btn = document.getElementById('createBtn');
+    btn.disabled = true;
+    btn.textContent = 'Creating…';
+
+    var id = newId(6);
+    if (loadPaste(id)) id = newId(8);
+
+    var obj = { t: title, c: body, lang: lang, d: Date.now() };
+    var ok = savePaste(id, obj);
+
+    btn.disabled = false;
+    btn.textContent = 'Create paste →';
+
+    if (!ok) { toast('Could not save (storage full?)', true); return; }
+
+    var link = pasteLink(id);
+    var raw = rawLink(id);
+    var box = document.getElementById('result');
+    box.innerHTML =
+      '<div class="linkbox"><span class="tag">LINK</span><input readonly id="nl"/><button class="btn teal" id="cl">Copy</button></div>' +
+      '<div class="linkbox"><span class="tag">RAW</span><input readonly id="nr"/><button class="btn alt" id="cr">Copy</button></div>' +
+      '<div class="row" style="margin-top:10px"><button class="btn alt" id="ov">Open paste →</button></div>';
+
+    document.getElementById('nl').value = link;
+    document.getElementById('nr').value = raw;
+    document.getElementById('cl').onclick = function () { copyText(link); };
+    document.getElementById('cr').onclick = function () { copyText(raw); };
+    document.getElementById('ov').onclick = function () { location.hash = '#/' + id; };
+
+    document.getElementById('pBody').value = '';
+    document.getElementById('pTitle').value = '';
+    document.getElementById('charCount').textContent = '0 characters';
+    toast('Paste created');
+  };
+
+  /* recent */
+  function renderRecent() {
+    show('recent');
+    var list = document.getElementById('recentList');
+    var idx = getIndex();
+    if (!idx.length) {
+      list.innerHTML = '<div class="empty">No pastes yet. Create one from New paste.</div>';
+      return;
+    }
+    list.innerHTML = idx.map(function (it) {
+      var when = it.d ? new Date(it.d).toLocaleString() : '';
+      return (
+        '<div class="item">' +
+          '<div style="flex:1;min-width:0">' +
+            '<div class="title" data-id="' + esc(it.id) + '">' + esc(it.t) + '</div>' +
+            '<div class="sub">' + esc(when) + ' · ' + (it.n || 0) + ' chars · id ' + esc(it.id) + '</div>' +
+          '</div>' +
+          '<span class="badge">' + esc(it.lang || 'text') + '</span>' +
+          '<button class="btn alt" data-open="' + esc(it.id) + '">Open</button>' +
+          '<button class="btn red" data-del="' + esc(it.id) + '">Del</button>' +
+        '</div>'
+      );
+    }).join('');
+
+    list.querySelectorAll('[data-open], .title[data-id]').forEach(function (el) {
+      el.onclick = function () {
+        var id = el.getAttribute('data-open') || el.getAttribute('data-id');
+        location.hash = '#/' + id;
+      };
+    });
+    list.querySelectorAll('[data-del]').forEach(function (el) {
+      el.onclick = function () {
+        var id = el.getAttribute('data-del');
+        delRaw('paste:' + id);
+        setIndex(getIndex().filter(function (x) { return x.id !== id; }));
+        renderRecent();
+        toast('Deleted');
+      };
+    });
+  }
+
+  document.getElementById('clearAllBtn').onclick = function () {
+    if (!confirm('Delete ALL pastes on this device?')) return;
+    getIndex().forEach(function (it) { delRaw('paste:' + it.id); });
+    setIndex([]);
+    renderRecent();
+    toast('All pastes deleted');
+  };
+
+  /* paste / raw */
+  function renderPaste(id) {
+    show('paste');
+    var el = document.getElementById('view-paste');
+    var o = loadPaste(id);
+    if (!o) {
+      el.innerHTML = '<div class="empty err">Paste not found on this device.</div>';
+      return;
+    }
+    var lines = String(o.c).split('\n');
+    var nums = '';
+    for (var i = 1; i <= lines.length; i++) nums += i + '\n';
+    var when = o.d ? new Date(o.d).toLocaleString() : '';
+
+    el.innerHTML =
+      '<div class="paste-head">' +
+        '<h2>' + esc(o.t) + '</h2>' +
+        '<span class="badge">' + esc(o.lang || 'text') + '</span>' +
+        '<span class="meta">' + esc(when) + '</span>' +
+      '</div>' +
+      '<div class="codebox"><div class="ln">' + nums + '</div><pre id="cp"></pre></div>' +
+      '<div class="row" style="margin-top:12px">' +
+        '<button class="btn" id="bCopy">Copy text</button>' +
+        '<button class="btn alt" id="bRaw">View raw</button>' +
+        '<button class="btn alt" id="bLink">Copy link</button>' +
+        '<button class="btn alt" id="bRawLink">Copy raw link</button>' +
+        '<button class="btn alt" id="bHome">New paste</button>' +
+      '</div>';
+
+    document.getElementById('cp').textContent = o.c;
+    document.getElementById('bCopy').onclick = function () { copyText(o.c); };
+    document.getElementById('bRaw').onclick = function () { location.hash = '#/' + id + '/raw'; };
+    document.getElementById('bLink').onclick = function () { copyText(pasteLink(id)); };
+    document.getElementById('bRawLink').onclick = function () { copyText(rawLink(id)); };
+    document.getElementById('bHome').onclick = function () { location.hash = '#/'; };
+  }
+
+  function renderRaw(id) {
+    show('raw');
+    var el = document.getElementById('view-raw');
+    var o = loadPaste(id);
+    if (!o) {
+      el.innerHTML = '<div class="empty err">Paste not found on this device.</div>';
+      return;
+    }
+    el.innerHTML =
+      '<div class="raw-wrap">' +
+        '<div class="raw-bar">' +
+          '<button id="rCopy">Copy raw</button>' +
+          '<button id="rBack">← Back to paste</button>' +
+        '</div>' +
+        '<pre id="rp"></pre>' +
+      '</div>';
+    document.getElementById('rp').textContent = o.c;
+    document.getElementById('rCopy').onclick = function () { copyText(o.c); };
+    document.getElementById('rBack').onclick = function () { location.hash = '#/' + id; };
+  }
+
+  /* router */
+  function route() {
+    var h = (location.hash || '').replace(/^#\/?/, '');
+    var parts = h.split('/').filter(Boolean);
+
+    if (!parts.length) { show('home'); return; }
+    if (parts[0] === 'recent') { renderRecent(); return; }
+    if (parts.length === 1) { renderPaste(parts[0]); return; }
+    if (parts.length === 2 && parts[1] === 'raw') { renderRaw(parts[0]); return; }
+    show('home');
+  }
+
+  window.addEventListener('hashchange', route);
+  window.go = go;
+  route();
+})();
+</script>
+</body>
+</html>
